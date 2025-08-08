@@ -60,21 +60,6 @@ import java.util.stream.Collectors;
 @EnableWebSecurity
 public class SecurityConfig {
 
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        UserDetails user = User.withUsername("ali")
-//                .password(passwordEncoder().encode("1234"))
-//                .roles("USER")
-//                .build();
-//
-//        UserDetails admin = User.withUsername("admin")
-//                .password(passwordEncoder().encode("adminpass"))
-//                .roles("ADMIN")
-//                .build();
-//
-//        return new InMemoryUserDetailsManager(user, admin);
-//    }
-
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
