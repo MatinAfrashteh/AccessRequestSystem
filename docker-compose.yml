@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for main-app
+  postgres:
+    image: postgres:15
+    container_name: postgres-container
+    restart: always
+    environment:
+      POSTGRES_DB: train
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgress
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # MySQL for auth-server
+  db-auth:
+    image: mysql:8
+    container_name: db-auth
+    environment:
+      MYSQL_DATABASE: eazybank
+      MYSQL_ROOT_PASSWORD: root        
+      MYSQL_USER: authuser            
+      MYSQL_PASSWORD: authpass
+    ports:
+      - "3307:3306" 
+    volumes:
+      - mysql-data-fresh:/var/lib/mysql
+    networks:
+      - backend
+
+  # Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.4
+    container_name: keycloak
+    ports:
+      - "8081:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    command: start-dev
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - backend
+
+  # Spring Boot + PostgreSQL
+  main-app:
+    build:
+      context: ./Access Request System App
+      dockerfile: Dockerfile
+    container_name: main-app-container
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: train
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgress
+    ports:
+      - "8085:8080"
+    depends_on:
+      - postgres
+      - keycloak
+    networks:
+      - backend
+      
+  # Spring Boot Auth + MySQL
+  auth-server:
+    build:
+      context: ./auth-server
+      dockerfile: Dockerfile
+    container_name: auth-server
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db-auth
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-auth:3306/eazybank
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    networks:
+      - backend
+
+volumes:
+  postgres-data:
+  mysql-data-fresh:
+  keycloak_data:
+
+networks:
+  backend:
